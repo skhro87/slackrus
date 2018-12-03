@@ -2,6 +2,7 @@
 package slackrus
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/johntdyer/slack-go"
@@ -42,7 +43,7 @@ func (sh *SlackrusHook) Fire(e *logrus.Entry) error {
 	if sh.Disabled {
 		return nil
 	}
-	
+
 	color := ""
 	switch e.Level {
 	case logrus.DebugLevel:
@@ -75,7 +76,12 @@ func (sh *SlackrusHook) Fire(e *logrus.Entry) error {
 			slackField := &slack.Field{}
 
 			slackField.Title = k
-			slackField.Value = fmt.Sprint(v)
+			if vJsonRawMessage, ok := v.(json.RawMessage); ok {
+				slackField.Value = string(vJsonRawMessage)
+			} else {
+				slackField.Value = fmt.Sprint(v)
+			}
+
 			// If the field is <= 20 then we'll set it to short
 			if len(slackField.Value) <= 20 {
 				slackField.Short = true
